@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/LuckyKuang/sub2api-plus/internal/pkg/ctxkey"
 	"github.com/LuckyKuang/sub2api-plus/internal/securityaudit"
 	middleware2 "github.com/LuckyKuang/sub2api-plus/internal/server/middleware"
 	"github.com/LuckyKuang/sub2api-plus/internal/service"
@@ -116,6 +117,10 @@ func validateBillingPricingAdmission(c *gin.Context, reqLog *zap.Logger) *securi
 func runSecurityAudit(c *gin.Context, reqLog *zap.Logger, coordinator *securityaudit.Coordinator, legacy *service.ContentModerationService, apiKey *service.APIKey, subject middleware2.AuthSubject, protocol, model string, body []byte, stage string) (result *securityaudit.Decision) {
 	result = evaluateSecurityAudit(c, reqLog, coordinator, legacy, apiKey, subject, protocol, model, body, stage)
 	observeAuditedRequest(c, apiKey, subject, model, stage, result)
+	if result != nil && result.Kind == securityaudit.DecisionBlock && subject.UserID > 0 && c != nil && c.Request != nil {
+		requestID, _ := c.Request.Context().Value(ctxkey.RequestID).(string)
+		service.RecordReputationContentAudit(c.Request.Context(), subject.UserID, requestID)
+	}
 	return result
 }
 

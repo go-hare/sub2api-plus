@@ -37,6 +37,7 @@ import riskControlAPI from './riskControl'
 import adminComplianceAPI from './compliance'
 import auditAPI from './audit'
 import ipAccessControlAPI from './ipAccessControl'
+import reputationAPI from './reputation'
 import pluginsAPI from './plugins'
 
 /**
@@ -76,6 +77,7 @@ export const adminAPI = {
   compliance: adminComplianceAPI,
   audit: auditAPI,
   ipAccessControl: ipAccessControlAPI,
+  reputation: reputationAPI,
   plugins: pluginsAPI
 }
 
@@ -114,6 +116,7 @@ export {
   adminComplianceAPI,
   auditAPI,
   ipAccessControlAPI,
+  reputationAPI,
   pluginsAPI
 }
 
@@ -138,6 +141,11 @@ export type {
   TrustedProxyConfigurationState,
   TrustedProxyStatus
 } from './ipAccessControl'
+export type {
+  ReputationSettings,
+  ReputationTier,
+  ReputationEventRule
+} from './reputation'
 export type {
   PluginInstallation,
   PluginCompatibility,

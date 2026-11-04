@@ -66,6 +66,19 @@
         />
         <p class="input-hint">{{ t('admin.users.form.rpmLimitHint') }}</p>
       </div>
+      <div v-if="reputationEnabled">
+        <label class="input-label">{{ t('admin.users.form.reputationScore') }}</label>
+        <input
+          v-model.number="form.reputation_score"
+          type="number"
+          min="0"
+          max="100"
+          step="1"
+          class="input"
+        />
+        <p class="input-hint">{{ t('admin.users.form.reputationScoreHint') }}</p>
+        <p class="mt-1 text-sm surface-muted">{{ t('admin.users.form.reputationTier') }}：{{ reputationTierLabel }}</p>
+      </div>
       <UserAttributeForm v-model="form.customAttributes" :user-id="user?.id" />
     </form>
     <template #footer>
@@ -88,6 +101,8 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { useClipboard } from '@/composables/useClipboard'
 import { adminAPI } from '@/api/admin'
+import reputationAPI from '@/api/admin/reputation'
+import { useReputationSettings } from '@/composables/useReputationSettings'
 import type { AdminUser, UserAttributeValuesMap } from '@/types'
 import BaseDialog from '@/components/common/BaseDialog.vue'
 import Select from '@/components/common/Select.vue'
@@ -101,6 +116,7 @@ const emit = defineEmits(['close', 'success'])
 const { t } = useI18n(); const appStore = useAppStore(); const { copyToClipboard } = useClipboard()
 
 const submitting = ref(false); const passwordCopied = ref(false)
+const { enabled: reputationEnabled, load: loadReputationSettings } = useReputationSettings()
 const roleOptions = computed(() => [
   { value: 'user', label: t('admin.users.roles.user') },
   { value: 'admin', label: t('admin.users.roles.admin') }
@@ -113,12 +129,19 @@ const form = reactive({
   role: 'user' as AdminUser['role'],
   concurrency: 1,
   rpm_limit: 0,
+  reputation_score: 60,
   customAttributes: {} as UserAttributeValuesMap
+})
+
+const reputationTierLabel = computed(() => props.user?.reputation_tier?.name || '-')
+
+watch(() => props.show, (show) => {
+  if (show) void loadReputationSettings()
 })
 
 watch(() => props.user, (u) => {
   if (u) {
-    Object.assign(form, { email: u.email, password: '', username: u.username || '', notes: u.notes || '', role: u.role || 'user', concurrency: u.concurrency, rpm_limit: u.rpm_limit ?? 0, customAttributes: {} })
+    Object.assign(form, { email: u.email, password: '', username: u.username || '', notes: u.notes || '', role: u.role || 'user', concurrency: u.concurrency, rpm_limit: u.rpm_limit ?? 0, reputation_score: u.reputation_score ?? 60, customAttributes: {} })
     passwordCopied.value = false
   }
 }, { immediate: true })
@@ -146,6 +169,11 @@ const handleUpdateUser = async () => {
     appStore.showError(t('admin.users.concurrencyNonNegative'))
     return
   }
+  const nextScore = Number(form.reputation_score)
+  if (reputationEnabled.value && (!Number.isInteger(nextScore) || nextScore < 0 || nextScore > 100)) {
+    appStore.showError(t('admin.reputation.users.invalidScore'))
+    return
+  }
   const userId = props.user.id
   submitting.value = true
   try {
@@ -153,6 +181,9 @@ const handleUpdateUser = async () => {
     if (form.password.trim()) data.password = form.password.trim()
     // 提升为管理员属敏感操作：后端返回 STEP_UP_REQUIRED 时弹 TOTP 验证并重试
     await stepUp.run(() => adminAPI.users.update(userId, data))
+    if (reputationEnabled.value && nextScore !== (props.user.reputation_score ?? 60)) {
+      await reputationAPI.updateUserScore(userId, { score: nextScore })
+    }
     if (Object.keys(form.customAttributes).length > 0) await adminAPI.userAttributes.updateUserAttributeValues(userId, form.customAttributes)
     appStore.showSuccess(t('admin.users.userUpdated'))
     emit('success'); emit('close')

@@ -135,6 +135,8 @@ func RegisterAdminRoutes(
 		monitorV3.GET("/config", h.ChannelMonitorV3.GetConfig)
 		monitorV3.PUT("/config", h.ChannelMonitorV3.UpdateConfig)
 
+		registerReputationRoutes(admin, h)
+
 		// 风控中心
 		registerContentModerationRoutes(admin, h)
 
@@ -146,6 +148,15 @@ func RegisterAdminRoutes(
 
 		// 操作审计日志
 		registerAuditLogRoutes(admin, h, stepUpAuth)
+	}
+}
+
+func registerReputationRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
+	rep := admin.Group("/reputation")
+	{
+		rep.GET("/settings", h.Admin.Reputation.GetSettings)
+		rep.PUT("/settings", h.Admin.Reputation.UpdateSettings)
+		rep.PUT("/users/:id", h.Admin.Reputation.UpdateUserScore)
 	}
 }
 

@@ -22,6 +22,7 @@ import (
 	"github.com/LuckyKuang/sub2api-plus/internal/config"
 	"github.com/LuckyKuang/sub2api-plus/internal/domain"
 	"github.com/LuckyKuang/sub2api-plus/internal/pkg/cnmodels"
+	"github.com/LuckyKuang/sub2api-plus/internal/pkg/ctxkey"
 	"github.com/LuckyKuang/sub2api-plus/internal/pkg/logger"
 	"github.com/LuckyKuang/sub2api-plus/internal/pkg/openai"
 	"github.com/LuckyKuang/sub2api-plus/internal/pkg/xai"
@@ -852,6 +853,24 @@ type GatewayService struct {
 	tlsFPProfileService   *TLSFingerprintProfileService
 	balanceNotifyService  *BalanceNotifyService
 	userPlatformQuotaRepo UserPlatformQuotaRepository
+	reputationService     *ReputationService
+}
+
+func (s *GatewayService) SetReputationService(svc *ReputationService) {
+	if s != nil {
+		s.reputationService = svc
+	}
+}
+
+func (s *GatewayService) filterAccountsByReputation(ctx context.Context, accounts []Account) ([]Account, error) {
+	if s == nil || s.reputationService == nil {
+		return accounts, nil
+	}
+	userID, _ := ctx.Value(ctxkey.UserID).(int64)
+	if userID <= 0 {
+		return accounts, nil
+	}
+	return s.reputationService.FilterAccounts(ctx, userID, accounts)
 }
 
 // NewGatewayService creates a new GatewayService

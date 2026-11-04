@@ -854,6 +854,45 @@ func ProvideOpsIngressRejectAggregator(opsRepo OpsRepository, opsService *OpsSer
 	return aggregator
 }
 
+
+func ProvideReputationRuntime(
+	settingRepo SettingRepository,
+	store ReputationStore,
+	accounts AccountRepository,
+	auth *AuthService,
+	redeem *RedeemService,
+	gateway *GatewayService,
+	openaiGW *OpenAIGatewayService,
+	gemini *GeminiMessagesCompatService,
+	admin AdminService,
+	accountSvc *AccountService,
+) *ReputationService {
+	svc := NewReputationService(settingRepo, store)
+	SetReputationRuntime(svc, accounts)
+	if auth != nil {
+		auth.SetReputationService(svc)
+	}
+	if redeem != nil {
+		redeem.SetReputationService(svc)
+	}
+	if gateway != nil {
+		gateway.SetReputationService(svc)
+	}
+	if openaiGW != nil {
+		openaiGW.SetReputationService(svc)
+	}
+	if gemini != nil {
+		gemini.SetReputationService(svc)
+	}
+	if accountSvc != nil {
+		accountSvc.SetReputationService(svc)
+	}
+	if setter, ok := admin.(interface{ SetReputationService(*ReputationService) }); ok {
+		setter.SetReputationService(svc)
+	}
+	return svc
+}
+
 // ProvideSettingService wires SettingService with group reader and proxy repo.
 func ProvideSettingService(scopedKeys ScopedAdminKeyRepository, settingRepo SettingRepository, groupRepo GroupRepository, proxyRepo ProxyRepository, cfg *config.Config) *SettingService {
 	svc := NewSettingService(settingRepo, cfg)
@@ -923,6 +962,7 @@ var ProviderSet = wire.NewSet(
 	ProvideAuthService,
 	NewPasskeyService,
 	NewUserService,
+	ProvideReputationRuntime,
 	NewClientDisconnectRiskService,
 	ProvideAPIKeyService,
 	ProvideAPIKeyAuthCacheInvalidator,

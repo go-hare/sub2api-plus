@@ -1868,6 +1868,20 @@
           <p class="input-hint">{{ t('admin.accounts.billingRateMultiplierHint') }}</p>
         </div>
       </div>
+      <div v-if="reputationEnabled" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label class="input-label">{{ t('admin.reputation.account.tier') }}</label>
+          <Select v-model="form.reputation_tier_id" :options="reputationTierOptions" :searchable="false" />
+          <p class="input-hint">{{ t('admin.reputation.account.tierHint') }}</p>
+        </div>
+        <div>
+          <label class="input-label">{{ t('admin.reputation.account.scoreEnabled') }}</label>
+          <div class="mt-2">
+            <Toggle v-model="form.reputation_score_enabled" />
+          </div>
+          <p class="input-hint">{{ t('admin.reputation.account.scoreEnabledHint') }}</p>
+        </div>
+      </div>
       <div class="border-t border-gray-200 pt-4 dark:border-dark-600">
         <label class="input-label">{{ t('admin.accounts.expiresAt') }}</label>
         <DateTimePicker :aria-label="t('admin.accounts.expiresAt')" v-model="expiresAtInput" type="datetime-local" class="input" />
@@ -2977,6 +2991,7 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 
 import { adminAPI } from '@/api/admin'
+import { defaultReputationScoreEnabled, useReputationSettings } from '@/composables/useReputationSettings'
 import { useQuotaNotifyState } from '@/composables/useQuotaNotifyState'
 import type {
   Account,
@@ -4022,7 +4037,14 @@ const form = reactive({
   rate_multiplier: 1,
   status: 'active' as 'active' | 'inactive' | 'error',
   group_ids: [] as number[],
-  expires_at: null as number | null
+  expires_at: null as number | null,
+  reputation_tier_id: '',
+  reputation_score_enabled: false
+})
+
+const { enabled: reputationEnabled, tierOptions: reputationTierOptions, load: loadReputationSettings, defaultTierID } = useReputationSettings()
+watch(() => props.show, (show) => {
+  if (show) void loadReputationSettings()
 })
 
 
@@ -4131,6 +4153,8 @@ const syncFormFromAccount = (newAccount: Account | null) => {
     : 'active'
   form.group_ids = newAccount.group_ids || []
   form.expires_at = newAccount.expires_at ?? null
+  form.reputation_tier_id = newAccount.reputation_tier_id || defaultTierID.value || ''
+  form.reputation_score_enabled = newAccount.reputation_score_enabled ?? defaultReputationScoreEnabled(newAccount.type)
 
   // Load intercept warmup requests setting (applies to all account types)
   const credentials = newAccount.credentials as Record<string, unknown> | undefined
@@ -5234,6 +5258,13 @@ const handleSubmit = async () => {
       updatePayload.load_factor = 0
     }
     updatePayload.auto_pause_on_expired = autoPauseOnExpired.value
+    if (reputationEnabled.value) {
+      updatePayload.reputation_tier_id = form.reputation_tier_id
+      updatePayload.reputation_score_enabled = form.reputation_score_enabled
+    } else {
+      delete updatePayload.reputation_tier_id
+      delete updatePayload.reputation_score_enabled
+    }
     // For apikey type, handle credentials update
     if (props.account.type === 'apikey') {
       const currentCredentials = (props.account.credentials as Record<string, unknown>) || {}

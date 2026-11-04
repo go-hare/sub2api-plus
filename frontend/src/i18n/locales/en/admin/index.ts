@@ -7,6 +7,7 @@ import settings from './settings'
 import audit from './audit'
 import promptAudit from './promptAudit'
 import ipAccessControl from './ipAccessControl'
+import reputation from './reputation'
 import support from './support'
 import plugins from './plugins'
 
@@ -20,6 +21,7 @@ export default {
   ...audit,
   ...promptAudit,
   ...ipAccessControl,
+  ...reputation,
   ...support,
   ...plugins,
 }

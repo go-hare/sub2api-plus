@@ -51,11 +51,14 @@ func ProvideAdminHandlers(
 	complianceHandler *admin.ComplianceHandler,
 	auditLogHandler *admin.AuditLogHandler,
 	ipAccessControlHandler *admin.IPAccessControlHandler,
+	reputationHandler *admin.ReputationHandler,
+	reputationService *service.ReputationService,
 	ollamaCloudUsage *service.OllamaCloudUsageService,
 	usageAlert *service.UsageAlertService,
 	opencodeGoUsage *service.OpenCodeGoUsageService,
 	claudeResetCredits *service.ClaudeResetCreditService,
 ) *AdminHandlers {
+	userHandler.SetReputationService(reputationService)
 	accountHandler.SetCNOAuthService(cnOAuthService)
 	accountHandler.SetOllamaCloudUsageService(ollamaCloudUsage)
 	accountHandler.SetUsageAlertService(usageAlert)
@@ -101,6 +104,7 @@ func ProvideAdminHandlers(
 		Compliance:             complianceHandler,
 		AuditLog:               auditLogHandler,
 		IPAccessControl:        ipAccessControlHandler,
+		Reputation:             reputationHandler,
 	}
 }
 
@@ -326,6 +330,7 @@ var ProviderSet = wire.NewSet(
 
 	// Admin handlers
 	admin.NewDashboardHandler,
+	admin.NewReputationHandler,
 	admin.NewUserHandler,
 	admin.NewGroupHandlerWithConfig,
 	admin.ProvideAccountHandler,

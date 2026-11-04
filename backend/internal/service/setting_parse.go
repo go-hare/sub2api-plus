@@ -226,6 +226,7 @@ func (s *SettingService) InitializeDefaultSettings(ctx context.Context) error {
 
 		// 风控中心功能（默认关闭，显式启用）
 		SettingKeyRiskControlEnabled: "false",
+		SettingKeyReputationConfig: defaultReputationConfigJSON(),
 		// 客户端连续断开自动封禁独立于内容审计总开关，默认关闭。
 		SettingKeyClientDisconnectConsecutiveBanEnabled:    "false",
 		SettingKeyClientDisconnectConsecutiveBanThreshold:  "10",

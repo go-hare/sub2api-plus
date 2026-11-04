@@ -215,6 +215,7 @@ export default {
     contentModeration: '内容审核',
     promptAudit: '提示词审计',
     ipAccessControl: 'IP 访问控制',
+    reputation: '信誉分',
     auditLogs: '操作日志',
   },
 

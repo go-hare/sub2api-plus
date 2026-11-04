@@ -59,6 +59,9 @@ type User struct {
 	// 与 (用户, 分组) 上限同时生效，不被分组或 override 替代；计数键 rpm:u:{userID}:{min}。
 	RPMLimit int
 
+	// ReputationScore is the integer 0-100 score used by independent reputation routing.
+	ReputationScore int
+
 	// UserGroupRPMOverride 来自 auth cache snapshot 的 (user, group) RPM 覆盖值。
 	// nil 时按目标分组回源查询，缺省使用分组上限；0 仅豁免该分组，正数替代分组上限。
 	// 该值只属于认证快照的原分组，换组须清除后重查；用户全局上限始终生效。字段不持久化到数据库。

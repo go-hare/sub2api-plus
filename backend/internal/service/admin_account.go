@@ -445,6 +445,8 @@ func buildAccountForCreate(input *CreateAccountInput, accountExtra map[string]an
 		Priority:    input.Priority,
 		Status:      StatusActive,
 		Schedulable: true,
+		ReputationTierID: input.ReputationTierID,
+		ReputationScoreEnabled: input.ReputationScoreEnabled,
 	}
 	if err := account.NormalizeCodexFingerprintMode(); err != nil {
 		return nil, err
@@ -578,6 +580,10 @@ func (s *adminServiceImpl) CreateAccount(ctx context.Context, input *CreateAccou
 				return nil, err
 			}
 		}
+	}
+
+	if err := s.applyAccountReputation(ctx, account, input.ReputationTierID, input.ReputationScoreEnabled, true); err != nil {
+		return nil, err
 	}
 
 	AfterAccountCommit(ctx, func(context.Context) {
@@ -939,6 +945,13 @@ func (s *adminServiceImpl) UpdateAccount(ctx context.Context, id int64, input *U
 			return nil, err
 		}
 	} else if err := persist(ctx, s.accountRepo); err != nil {
+		return nil, err
+	}
+	tierID := account.ReputationTierID
+	if input.ReputationTierID != nil {
+		tierID = *input.ReputationTierID
+	}
+	if err := s.applyAccountReputation(ctx, account, tierID, input.ReputationScoreEnabled, false); err != nil {
 		return nil, err
 	}
 
@@ -2004,4 +2017,30 @@ func (s *adminServiceImpl) ForceAntigravityPrivacy(ctx context.Context, account 
 	}
 	applyAntigravityPrivacyMode(account, mode)
 	return mode
+}
+
+
+func (s *adminServiceImpl) applyAccountReputation(ctx context.Context, account *Account, tierID string, scoreEnabled *bool, requiredWhenEnabled bool) error {
+	if s == nil || s.reputationService == nil || account == nil {
+		return nil
+	}
+	settings := s.reputationService.GetSettings(ctx)
+	if !settings.Enabled {
+		return nil
+	}
+	if strings.TrimSpace(tierID) == "" && requiredWhenEnabled {
+		tierID = DefaultAccountReputationTierID(settings.Tiers, settings.InitialScore)
+	}
+	if strings.TrimSpace(tierID) != "" {
+		if err := s.reputationService.ValidateAccountTier(ctx, tierID); err != nil {
+			return err
+		}
+	}
+	account.ReputationTierID = strings.TrimSpace(tierID)
+	account.ReputationScoreEnabled = scoreEnabled
+	var storedTier *string
+	if account.ReputationTierID != "" {
+		storedTier = &account.ReputationTierID
+	}
+	return s.reputationService.SetAccountFields(ctx, account.ID, storedTier, scoreEnabled)
 }

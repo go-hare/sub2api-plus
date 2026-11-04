@@ -427,6 +427,8 @@ type CreateAccountInput struct {
 	// SkipMixedChannelCheck skips the mixed channel risk check when binding groups.
 	// This should only be set when the caller has explicitly confirmed the risk.
 	SkipMixedChannelCheck bool
+	ReputationTierID       string
+	ReputationScoreEnabled *bool
 }
 
 // ShadowOptions is the input for CreateShadow.
@@ -454,6 +456,8 @@ type UpdateAccountInput struct {
 	GroupIDs              *[]int64
 	ExpiresAt             *int64
 	AutoPauseOnExpired    *bool
+	ReputationTierID       *string
+	ReputationScoreEnabled *bool
 	SkipMixedChannelCheck bool // 跳过混合渠道检查（用户已确认风险）
 }
 
@@ -729,10 +733,17 @@ type adminServiceImpl struct {
 	compositeResolver    *CompositeRouteResolver
 	// 分组平台变更后用来失效渠道缓存；可为 nil（缓存会在 TTL 到期后自然重建）
 	channelCacheInvalidator ChannelCacheInvalidator
+	reputationService       *ReputationService
 }
 
 // ChannelCacheInvalidator 失效渠道缓存。
 // 窄接口，避免 admin 服务依赖整个 ChannelService——与 APIKeyAuthCacheInvalidator 同一思路。
+func (s *adminServiceImpl) SetReputationService(svc *ReputationService) {
+	if s != nil {
+		s.reputationService = svc
+	}
+}
+
 type ChannelCacheInvalidator interface {
 	InvalidateCache()
 }

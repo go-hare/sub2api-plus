@@ -74,6 +74,7 @@ var ProviderSet = wire.NewSet(
 	NewZhipuOffPeakRepository,
 	NewProviderFilesRepository,
 	NewUserRepository,
+	NewReputationRepository,
 	NewClientDisconnectRiskRepository,
 	NewAPIKeyRepository,
 	NewGroupRepository,

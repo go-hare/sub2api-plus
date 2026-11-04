@@ -215,6 +215,7 @@ export default {
     contentModeration: 'Content Moderation',
     promptAudit: 'Prompt Audit',
     ipAccessControl: 'IP Access Control',
+    reputation: 'Reputation',
     auditLogs: 'Audit Logs',
   },
 

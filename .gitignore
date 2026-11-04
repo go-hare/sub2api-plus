@@ -57,6 +57,7 @@ pnpm-debug.log*
 *.env
 !.env.example
 docker-compose.override.yml
+.local-run/
 
 # ===================
 # IDE / 编辑器

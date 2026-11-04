@@ -577,6 +577,14 @@
             />
           </template>
 
+          <template #cell-reputation_score="{ row }">
+            <span class="text-sm font-medium text-gray-900 dark:text-white">{{ row.reputation_score ?? '-' }}</span>
+          </template>
+
+          <template #cell-reputation_tier="{ row }">
+            <span class="text-sm surface-muted">{{ row.reputation_tier?.name || '-' }}</span>
+          </template>
+
           <template #cell-status="{ value }">
             <div class="flex items-center gap-1.5">
               <span
@@ -799,6 +807,7 @@ import Icon from '@/components/icons/Icon.vue'
 
 const { t } = useI18n()
 import { adminAPI } from '@/api/admin'
+import { useReputationSettings } from '@/composables/useReputationSettings'
 import type { AdminUser, AdminGroup, UserAttributeDefinition } from '@/types'
 import type { BatchUserUsageStats } from '@/api/admin/dashboard'
 import type { PlatformQuotaItem } from '@/api/admin/users'
@@ -829,6 +838,7 @@ import UserBalanceHistoryModal from '@/components/admin/user/UserBalanceHistoryM
 import GroupReplaceModal from '@/components/admin/user/GroupReplaceModal.vue'
 
 const appStore = useAppStore()
+const { enabled: reputationEnabled, load: loadReputationSettings } = useReputationSettings()
 
 // Generate dynamic attribute columns from enabled definitions
 const attributeColumns = computed<Column[]>(() =>
@@ -895,6 +905,10 @@ const allColumns = computed<Column[]>(() => [
   { key: 'usage_gemini', label: t('admin.users.columns.usageGemini'), sortable: false },
   { key: 'usage_antigravity', label: t('admin.users.columns.usageAntigravity'), sortable: false },
   { key: 'concurrency', label: t('admin.users.columns.concurrency'), sortable: true },
+  ...(reputationEnabled.value ? [
+    { key: 'reputation_score', label: t('admin.users.columns.reputationScore'), sortable: false },
+    { key: 'reputation_tier', label: t('admin.users.columns.reputationTier'), sortable: false }
+  ] : []),
   { key: 'status', label: t('admin.users.columns.status'), sortable: true },
   { key: 'last_active_at', label: t('admin.users.columns.lastActive'), sortable: true },
   { key: 'last_used_at', label: t('admin.users.columns.lastUsed'), sortable: true },
@@ -1876,7 +1890,7 @@ const handleScroll = () => {
 }
 
 onMounted(async () => {
-  await loadAttributeDefinitions()
+  await Promise.all([loadAttributeDefinitions(), loadReputationSettings()])
   loadSavedFilters()
   loadSavedColumns()
   loadUsers()

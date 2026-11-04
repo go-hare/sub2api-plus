@@ -86,6 +86,7 @@ type AuthService struct {
 	affiliateService      *AffiliateService
 	defaultSubAssigner    DefaultSubscriptionAssigner
 	userPlatformQuotaRepo UserPlatformQuotaRepository
+	reputationService     *ReputationService
 }
 
 type CaptchaProof struct {
@@ -987,9 +988,18 @@ func (s *AuthService) bindOAuthAffiliate(ctx context.Context, userID int64, affi
 	}
 }
 
+func (s *AuthService) SetReputationService(svc *ReputationService) {
+	if s != nil {
+		s.reputationService = svc
+	}
+}
+
 func (s *AuthService) postAuthUserBootstrap(ctx context.Context, user *User, signupSource string, touchLogin bool) {
 	if user == nil || user.ID <= 0 {
 		return
+	}
+	if s.reputationService != nil {
+		s.reputationService.ApplyRegister(ctx, user.ID)
 	}
 
 	if strings.TrimSpace(signupSource) == "" {

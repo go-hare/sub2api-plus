@@ -3024,6 +3024,20 @@
           <p class="input-hint">{{ t('admin.accounts.billingRateMultiplierHint') }}</p>
         </div>
       </div>
+      <div v-if="reputationEnabled" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label class="input-label">{{ t('admin.reputation.account.tier') }}</label>
+          <Select v-model="form.reputation_tier_id" :options="reputationTierOptions" :searchable="false" />
+          <p class="input-hint">{{ t('admin.reputation.account.tierHint') }}</p>
+        </div>
+        <div>
+          <label class="input-label">{{ t('admin.reputation.account.scoreEnabled') }}</label>
+          <div class="mt-2">
+            <Toggle v-model="form.reputation_score_enabled" />
+          </div>
+          <p class="input-hint">{{ t('admin.reputation.account.scoreEnabledHint') }}</p>
+        </div>
+      </div>
       <div class="border-t border-gray-200 pt-4 dark:border-dark-600">
         <label class="input-label">{{ t('admin.accounts.expiresAt') }}</label>
         <DateTimePicker :aria-label="t('admin.accounts.expiresAt')" v-model="expiresAtInput" type="datetime-local" class="input" />
@@ -3826,6 +3840,7 @@ import {
   isValidWildcardPattern
 } from '@/composables/useModelWhitelist'
 import { adminAPI } from '@/api/admin'
+import { defaultReputationScoreEnabled, useReputationSettings } from '@/composables/useReputationSettings'
 import { useQuotaNotifyState } from '@/composables/useQuotaNotifyState'
 import {
   useAccountOAuth,
@@ -4791,7 +4806,23 @@ const form = reactive({
   priority: 1,
   rate_multiplier: 1,
   group_ids: [] as number[],
-  expires_at: null as number | null
+  expires_at: null as number | null,
+  reputation_tier_id: '',
+  reputation_score_enabled: true
+})
+
+const { enabled: reputationEnabled, tierOptions: reputationTierOptions, load: loadReputationSettings, defaultTierID } = useReputationSettings()
+watch(() => props.show, (show) => {
+  if (show) {
+    void loadReputationSettings().then(() => {
+      if (!form.reputation_tier_id) {
+        form.reputation_tier_id = defaultTierID.value || ''
+      }
+    })
+  }
+})
+watch(() => form.type, (type) => {
+  form.reputation_score_enabled = defaultReputationScoreEnabled(type)
 })
 
 // Helper to check if current type needs OAuth flow
@@ -5333,6 +5364,10 @@ const createAccountWithOutboundIdentity = (payload: CreateAccountRequest) => {
     ? codexCLICreateSettings.value?.prepareCreate() : null
   return adminAPI.accounts.create({
     ...payload,
+    ...(reputationEnabled.value ? {
+      reputation_tier_id: form.reputation_tier_id,
+      reputation_score_enabled: form.reputation_score_enabled
+    } : {}),
     credentials: {
       ...payload.credentials,
       ...(codexCLI ? { codex_cli: codexCLI } : {}),
@@ -5414,6 +5449,8 @@ const resetForm = () => {
   form.rate_multiplier = 1
   form.group_ids = []
   form.expires_at = null
+  form.reputation_tier_id = defaultTierID.value || ''
+  form.reputation_score_enabled = defaultReputationScoreEnabled(form.type)
   accountCategory.value = 'oauth-based'
   addMethod.value = 'oauth'
   accountMode.value = 'payg'

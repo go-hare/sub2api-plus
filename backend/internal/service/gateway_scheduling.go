@@ -1016,6 +1016,11 @@ func (s *GatewayService) listSchedulableAccounts(ctx context.Context, groupID *i
 		accounts, useMixed, err := s.schedulerSnapshot.ListSchedulableAccounts(ctx, groupID, platform, hasForcePlatform)
 		if err == nil {
 			accounts = s.filterAccountsBySchedulingThreshold(ctx, accounts)
+				var filterErr error
+				accounts, filterErr = s.filterAccountsByReputation(ctx, accounts)
+				if filterErr != nil {
+					return accounts, useMixed, filterErr
+				}
 			if platform == PlatformGrok || strings.EqualFold(platform, PlatformGrok) {
 				accounts = s.filterGrokFreeQuotaAccountsForGateway(ctx, accounts)
 			}
@@ -1116,6 +1121,10 @@ func (s *GatewayService) listSchedulableAccounts(ctx context.Context, groupID *i
 		}
 	}
 	accounts = s.filterAccountsBySchedulingThreshold(ctx, accounts)
+	accounts, err = s.filterAccountsByReputation(ctx, accounts)
+	if err != nil {
+		return accounts, useMixed, err
+	}
 	if platform == PlatformGrok || strings.EqualFold(platform, PlatformGrok) {
 		accounts = s.filterGrokFreeQuotaAccountsForGateway(ctx, accounts)
 	}

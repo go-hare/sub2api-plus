@@ -134,6 +134,8 @@ type CreateAccountRequest struct {
 	ExpiresAt               *int64         `json:"expires_at"`
 	AutoPauseOnExpired      *bool          `json:"auto_pause_on_expired"`
 	ConfirmMixedChannelRisk *bool          `json:"confirm_mixed_channel_risk"` // 用户确认混合渠道风险
+	ReputationTierID       string         `json:"reputation_tier_id"`
+	ReputationScoreEnabled *bool          `json:"reputation_score_enabled"`
 }
 
 // UpdateAccountRequest represents update account request
@@ -154,6 +156,8 @@ type UpdateAccountRequest struct {
 	ExpiresAt               *int64         `json:"expires_at"`
 	AutoPauseOnExpired      *bool          `json:"auto_pause_on_expired"`
 	ConfirmMixedChannelRisk *bool          `json:"confirm_mixed_channel_risk"` // 用户确认混合渠道风险
+	ReputationTierID       *string        `json:"reputation_tier_id"`
+	ReputationScoreEnabled *bool          `json:"reputation_score_enabled"`
 }
 
 // BulkUpdateAccountsRequest represents the payload for bulk editing accounts
@@ -1059,7 +1063,9 @@ func (h *AccountHandler) Create(c *gin.Context) {
 			GroupIDs:              req.GroupIDs,
 			ExpiresAt:             req.ExpiresAt,
 			AutoPauseOnExpired:    req.AutoPauseOnExpired,
-			SkipMixedChannelCheck: skipCheck,
+			SkipMixedChannelCheck:  skipCheck,
+			ReputationTierID:       req.ReputationTierID,
+			ReputationScoreEnabled: req.ReputationScoreEnabled,
 		})
 		if execErr != nil {
 			return nil, execErr
@@ -1194,10 +1200,11 @@ func (h *AccountHandler) Update(c *gin.Context) {
 		GroupIDs:              req.GroupIDs,
 		ExpiresAt:             req.ExpiresAt,
 		AutoPauseOnExpired:    req.AutoPauseOnExpired,
-		SkipMixedChannelCheck: skipCheck,
+		SkipMixedChannelCheck:  skipCheck,
+		ReputationTierID:       req.ReputationTierID,
+		ReputationScoreEnabled: req.ReputationScoreEnabled,
 	})
 	if err != nil {
-		// 检查是否为混合渠道错误
 		var mixedErr *service.MixedChannelError
 		if errors.As(err, &mixedErr) {
 			// 更新接口仅返回最小必要字段，详细信息由专门检查接口提供
@@ -2180,6 +2187,8 @@ func (h *AccountHandler) BatchCreate(c *gin.Context) {
 				ExpiresAt:             item.ExpiresAt,
 				AutoPauseOnExpired:    item.AutoPauseOnExpired,
 				SkipMixedChannelCheck: skipCheck,
+				ReputationTierID:      item.ReputationTierID,
+				ReputationScoreEnabled: item.ReputationScoreEnabled,
 			})
 			if err != nil {
 				failed++

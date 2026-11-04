@@ -68,13 +68,28 @@ func UserFromServiceAdmin(u *service.User) *AdminUser {
 	if base == nil {
 		return nil
 	}
-	return &AdminUser{
+	out := &AdminUser{
 		User:                 *base,
 		Notes:                u.Notes,
 		LastUsedAt:           u.LastUsedAt,
 		GroupRates:           u.GroupRates,
 		RestrictPublicGroups: u.RestrictPublicGroups,
 	}
+	out.ReputationScore = u.ReputationScore
+	return out
+}
+
+func AttachReputationTier(user *User, settings service.ReputationSettings) {
+	if user == nil {
+		return
+	}
+	if !settings.Enabled {
+		user.ReputationScore = 0
+		user.ReputationTier = nil
+		return
+	}
+	user.ReputationScore = service.ClampReputationScore(user.ReputationScore)
+	user.ReputationTier = service.FloorReputationTier(settings.Tiers, user.ReputationScore)
 }
 
 func APIKeyFromService(k *service.APIKey) *APIKey {
@@ -298,6 +313,8 @@ func AccountFromServiceShallow(a *service.Account) *Account {
 		CreatedAt:               a.CreatedAt,
 		UpdatedAt:               a.UpdatedAt,
 		Schedulable:             a.Schedulable,
+		ReputationTierID:        a.ReputationTierID,
+		ReputationScoreEnabled:  a.ReputationScoreEnabled,
 		RateLimitedAt:           a.RateLimitedAt,
 		RateLimitResetAt:        a.RateLimitResetAt,
 		OverloadUntil:           a.OverloadUntil,

@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/LuckyKuang/sub2api-plus/internal/config"
+	"github.com/LuckyKuang/sub2api-plus/internal/pkg/ctxkey"
 	"github.com/LuckyKuang/sub2api-plus/internal/pkg/ip"
 	"github.com/LuckyKuang/sub2api-plus/internal/pkg/logger"
 	"github.com/LuckyKuang/sub2api-plus/internal/pkg/openai"
@@ -622,6 +623,7 @@ type OpenAIGatewayService struct {
 	balanceNotifyService  *BalanceNotifyService
 	settingService        *SettingService
 	userPlatformQuotaRepo UserPlatformQuotaRepository
+	reputationService     *ReputationService
 	liveAttestation       liveattestation.Provider
 	liveAttestationCipher SecretEncryptor
 	// Bounds in-flight Live creation and unsaved-session compensation even
@@ -747,6 +749,23 @@ func NewOpenAIGatewayService(
 }
 
 // ResolveChannelMapping 解析渠道级模型映射（代理到 ChannelService）
+func (s *OpenAIGatewayService) SetReputationService(svc *ReputationService) {
+	if s != nil {
+		s.reputationService = svc
+	}
+}
+
+func (s *OpenAIGatewayService) filterAccountsByReputation(ctx context.Context, accounts []Account) ([]Account, error) {
+	if s == nil || s.reputationService == nil {
+		return accounts, nil
+	}
+	userID, _ := ctx.Value(ctxkey.UserID).(int64)
+	if userID <= 0 {
+		return accounts, nil
+	}
+	return s.reputationService.FilterAccounts(ctx, userID, accounts)
+}
+
 func (s *OpenAIGatewayService) ResolveChannelMapping(ctx context.Context, groupID int64, model string) ChannelMappingResult {
 	if s.channelService == nil {
 		return ChannelMappingResult{MappedModel: model}

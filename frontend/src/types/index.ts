@@ -100,6 +100,12 @@ export interface User {
   created_at: string
   updated_at: string
   deleted_at?: string | null
+  reputation_score?: number
+  reputation_tier?: {
+    id: string
+    name: string
+    score: number
+  } | null
 }
 
 export interface AdminUser extends User {
@@ -1338,6 +1344,8 @@ export interface Account {
   parent_chatgpt_account_id?: string
 
   grok_model_diagnostics?: GrokModelDiagnostics
+  reputation_tier_id?: string
+  reputation_score_enabled?: boolean | null
 }
 
 // The admin account list may return this compact shape when lite=1. Detail
@@ -1532,6 +1540,8 @@ export interface CreateAccountRequest {
   expires_at?: number | null
   auto_pause_on_expired?: boolean
   confirm_mixed_channel_risk?: boolean
+  reputation_tier_id?: string
+  reputation_score_enabled?: boolean
 }
 
 export interface UpdateAccountRequest {
@@ -1551,6 +1561,8 @@ export interface UpdateAccountRequest {
   expires_at?: number | null
   auto_pause_on_expired?: boolean
   confirm_mixed_channel_risk?: boolean
+  reputation_tier_id?: string
+  reputation_score_enabled?: boolean
 }
 
 export type GrokMediaEligibilityMode = 'auto' | 'enabled' | 'disabled'

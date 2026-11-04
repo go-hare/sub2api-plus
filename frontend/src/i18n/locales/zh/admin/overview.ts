@@ -575,6 +575,8 @@ export default {
         usageGemini: '用量 (Gemini)',
         usageAntigravity: '用量 (Antigravity)',
         concurrency: '并发数',
+        reputationScore: '信誉分',
+        reputationTier: '信誉档位',
         status: '状态',
         lastActive: '最后活跃时间',
         lastUsed: '最后使用时间',
@@ -643,7 +645,10 @@ export default {
         concurrencyPlaceholder: '0 表示不限制',
         concurrencyHint: '该用户的最大并发请求数，0 = 不限制',
         rpmLimitPlaceholder: '0 表示不限制',
-        rpmLimitHint: '该用户跨所有 Key 和分组的每分钟全局上限，0 = 不限制；分组上限和用户分组覆盖值不能替代此上限'
+        rpmLimitHint: '该用户跨所有 Key 和分组的每分钟全局上限，0 = 不限制；分组上限和用户分组覆盖值不能替代此上限',
+        reputationScore: '信誉分',
+        reputationScoreHint: '0–100，保存后档位按分数自动计算。',
+        reputationTier: '当前档位'
       },
       adjustBalance: '调整余额',
       adjustConcurrency: '调整并发数',

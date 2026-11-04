@@ -159,6 +159,9 @@ func (s *adminServiceImpl) CreateUser(ctx context.Context, input *CreateUserInpu
 			input.ActorAdminID, user.ID)
 	}
 	s.assignDefaultSubscriptions(ctx, user.ID)
+	if s.reputationService != nil {
+		s.reputationService.ApplyRegister(ctx, user.ID)
+	}
 	return user, nil
 }
 
