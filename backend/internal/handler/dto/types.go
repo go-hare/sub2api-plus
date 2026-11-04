@@ -34,7 +34,7 @@ type User struct {
 	// RPMLimit 用户全局每分钟请求数上限（0 = 不限制），与 (user, group) 上限同时生效，不被分组或 override 替代。
 	RPMLimit int `json:"rpm_limit"`
 
-	ReputationScore int                    `json:"reputation_score,omitempty"`
+	ReputationScore *int                    `json:"reputation_score,omitempty"`
 	ReputationTier  *service.ReputationTier `json:"reputation_tier,omitempty"`
 
 	APIKeys       []APIKey           `json:"api_keys,omitempty"`

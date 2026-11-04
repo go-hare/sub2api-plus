@@ -578,7 +578,7 @@
           </template>
 
           <template #cell-reputation_score="{ row }">
-            <span class="text-sm font-medium text-gray-900 dark:text-white">{{ row.reputation_score ?? '-' }}</span>
+            <span class="text-sm font-medium text-gray-900 dark:text-white">{{ Number.isFinite(row.reputation_score) ? row.reputation_score : '-' }}</span>
           </template>
 
           <template #cell-reputation_tier="{ row }">

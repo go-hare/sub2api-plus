@@ -1000,6 +1000,7 @@ func (s *AuthService) postAuthUserBootstrap(ctx context.Context, user *User, sig
 	}
 	if s.reputationService != nil {
 		s.reputationService.ApplyRegister(ctx, user.ID)
+		s.reputationService.HydrateUser(ctx, user)
 	}
 
 	if strings.TrimSpace(signupSource) == "" {

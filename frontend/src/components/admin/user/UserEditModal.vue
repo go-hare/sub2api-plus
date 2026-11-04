@@ -141,7 +141,7 @@ watch(() => props.show, (show) => {
 
 watch(() => props.user, (u) => {
   if (u) {
-    Object.assign(form, { email: u.email, password: '', username: u.username || '', notes: u.notes || '', role: u.role || 'user', concurrency: u.concurrency, rpm_limit: u.rpm_limit ?? 0, reputation_score: u.reputation_score ?? 60, customAttributes: {} })
+    Object.assign(form, { email: u.email, password: '', username: u.username || '', notes: u.notes || '', role: u.role || 'user', concurrency: u.concurrency, rpm_limit: u.rpm_limit ?? 0, reputation_score: Number.isFinite(u.reputation_score) ? Number(u.reputation_score) : 60, customAttributes: {} })
     passwordCopied.value = false
   }
 }, { immediate: true })
@@ -181,7 +181,8 @@ const handleUpdateUser = async () => {
     if (form.password.trim()) data.password = form.password.trim()
     // 提升为管理员属敏感操作：后端返回 STEP_UP_REQUIRED 时弹 TOTP 验证并重试
     await stepUp.run(() => adminAPI.users.update(userId, data))
-    if (reputationEnabled.value && nextScore !== (props.user.reputation_score ?? 60)) {
+    const currentScore = Number.isFinite(props.user.reputation_score) ? Number(props.user.reputation_score) : 60
+    if (reputationEnabled.value && nextScore !== currentScore) {
       await reputationAPI.updateUserScore(userId, { score: nextScore })
     }
     if (Object.keys(form.customAttributes).length > 0) await adminAPI.userAttributes.updateUserAttributeValues(userId, form.customAttributes)

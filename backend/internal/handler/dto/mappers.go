@@ -75,7 +75,8 @@ func UserFromServiceAdmin(u *service.User) *AdminUser {
 		GroupRates:           u.GroupRates,
 		RestrictPublicGroups: u.RestrictPublicGroups,
 	}
-	out.ReputationScore = u.ReputationScore
+	score := u.ReputationScore
+	out.ReputationScore = &score
 	return out
 }
 
@@ -84,12 +85,17 @@ func AttachReputationTier(user *User, settings service.ReputationSettings) {
 		return
 	}
 	if !settings.Enabled {
-		user.ReputationScore = 0
+		user.ReputationScore = nil
 		user.ReputationTier = nil
 		return
 	}
-	user.ReputationScore = service.ClampReputationScore(user.ReputationScore)
-	user.ReputationTier = service.FloorReputationTier(settings.Tiers, user.ReputationScore)
+	score := 0
+	if user.ReputationScore != nil {
+		score = *user.ReputationScore
+	}
+	clamped := service.ClampReputationScore(score)
+	user.ReputationScore = &clamped
+	user.ReputationTier = service.FloorReputationTier(settings.Tiers, clamped)
 }
 
 func APIKeyFromService(k *service.APIKey) *APIKey {

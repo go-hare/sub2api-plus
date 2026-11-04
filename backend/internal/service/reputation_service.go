@@ -242,6 +242,18 @@ func (s *ReputationService) ApplyRegister(ctx context.Context, userID int64) {
 	s.Apply(ctx, ReputationApplyInput{UserID: userID, Event: ReputationEventRegister})
 }
 
+func (s *ReputationService) HydrateUser(ctx context.Context, user *User) {
+	if s == nil || user == nil || s.store == nil || user.ID <= 0 {
+		return
+	}
+	stored, err := s.store.GetUserScore(ctx, user.ID)
+	if err != nil {
+		slog.Warn("reputation.hydrate_user_failed", "user_id", user.ID, "error", err)
+		return
+	}
+	user.ReputationScore = stored
+}
+
 func (s *ReputationService) ApplyContentAudit(ctx context.Context, userID int64, requestID string) {
 	s.Apply(ctx, ReputationApplyInput{UserID: userID, Event: ReputationEventContentAudit, RequestID: requestID})
 }
